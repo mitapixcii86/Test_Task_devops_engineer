@@ -4,7 +4,15 @@ resource "aws_vpc" "test_devops" {
   enable_dns_support   = true
   enable_dns_hostnames = true
   tags = {
-    Name = "docker-nginx-test_devops-vpc"
+    Name = "docker-nginx-test-devops-vpc"
+  }
+}
+
+# let vpc talk to the internet - create internet gateway 
+resource "aws_internet_gateway" "gw" {
+  vpc_id = aws_vpc.test_devops.id
+  tags = {
+    Name = "docker-nginx-test-devops-igw"
   }
 }
 
@@ -42,15 +50,6 @@ data "aws_subnet_ids" "public" {
 data "aws_subnet_ids" "private" {
   depends_on = [aws_subnet.private]
   vpc_id     = aws_vpc.test_devops.id
-}
-
-
-# let vpc talk to the internet - create internet gateway 
-resource "aws_internet_gateway" "gw" {
-  vpc_id = aws_vpc.test_devops.id
-  tags = {
-    Name = "docker-nginx-test_devops-igw"
-  }
 }
 
 # main route table for vpc and subnets

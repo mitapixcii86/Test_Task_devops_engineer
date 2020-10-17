@@ -20,11 +20,6 @@ resource "aws_key_pair" "generated_key" {
   public_key = tls_private_key.test_devops.public_key_openssh
 }
 
-# resource "local_file" "cloud_pem_public" {
-#   #filename = "key/terraform-ansible-public.pem"
-#   content  = tls_private_key.test_devops.public_key_openssh
-# }
-
 # security group for EC2 instances
 resource "aws_security_group" "test_devops_ec2" {
   name        = "docker-nginx-test_devops-ec2"
@@ -42,12 +37,6 @@ resource "aws_security_group" "test_devops_ec2" {
     to_port     = 22
     cidr_blocks = ["0.0.0.0/0"]
   }
-  # egress {
-  #   protocol    = "-1"
-  #   from_port   = 0
-  #   to_port     = 0
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
 }
 
 # EC2 instances, one per availability zone
@@ -80,7 +69,7 @@ resource "aws_instance" "test_devops" {
     }
   }
   # provisioner "local-exec" {
-  #   command = "ansible-playbook ../ansible/playbook.yml"
+  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -u ubuntu ../ansible/cd.yml --private-key key/terraform-ansible.pem"
   # }
 }
 
@@ -94,12 +83,25 @@ data  "template_file" "inventory" {
     template = file("./templates/inventory.tpl")
     vars = {
         instance_ip = join("\n", aws_instance.test_devops.*.public_ip)
+        key_path = local_file.cloud_pem_private.filename
     }
 }
 
-resource "local_file" "instance_ip" {
-  content  = data.template_file.inventory.rendered
-  filename = "../ansible/inventory"
+resource "null_resource" "update_inventory" {
+
+    triggers = {
+        template = data.template_file.inventory.rendered
+    }
+
+    provisioner "local-exec" {
+        command = "echo '${data.template_file.inventory.rendered}' > ../ansible/inventory"
+    }
+    provisioner "local-exec" {
+    command = "chmod 700 ../ansible/inventory"
+  }
+  # provisioner "local-exec" {
+  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -u ubuntu ../ansible/cd.yml --private-key key/terraform-ansible.pem -vvvv"
+  # }
 }
 
 #Attaching elastic IP
