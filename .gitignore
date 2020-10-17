@@ -1,0 +1,8 @@
+# ignore terraform working files
+/terraform/.terraform/
+*.tfplan
+terraform.tfstate
+terraform.tfstate.backup
+# ignore vscode workspace files
+tdd.code-workspace
+/ansible/.terraform

@@ -1,0 +1,18 @@
+---
+
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  vars:
+    project_dir : "../terraform"
+  tasks:
+  - name: terraform destroy
+    terraform:
+      binary_path : "/usr/local/bin/terraform"
+      project_path: "{{ project_dir }}"
+      plan_file: "{{ project_dir }}/myplan.tfplan"
+      state: absent
+    register: destroy_result
+
+  - debug:
+       var: destroy_result.stdout_lines

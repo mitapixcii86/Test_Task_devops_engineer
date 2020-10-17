@@ -1,0 +1,42 @@
+---
+- hosts: all
+  become: yes
+  tasks:
+    - name: ensure nginx is installed
+      service: 
+        name: nginx 
+        state: stopped
+
+    - name: Upload default index.html for host
+      copy: 
+        src: files/static_website/index.html 
+        dest: /usr/share/nginx/html/ 
+        mode: 0644
+
+    - name: Upload default jpeg for host
+      copy: 
+        src: files/static_website/sample.jpeg
+        dest: /usr/share/nginx/html/ 
+        mode: 0644
+
+    - name: Add a line in /etc/nginx/sites-available/default
+      lineinfile: 
+        dest: /etc/nginx/sites-available/default
+                  regexp='# Only for nginx-naxsi'
+                  line='location /images {}'       
+    - name: Create a directory called images
+      file: 
+        path: /usr/share/nginx/html/images 
+        state: directory 
+        mode: 0755
+
+    - name: Upload first image
+      copy: 
+        src: files/static_website/sample.jpeg 
+        dest: /usr/share/nginx/html/images/ 
+        mode: 0644
+        
+    - name: restart nginx  
+      service: 
+        name: nginx 
+        state: restarted
