@@ -2,10 +2,39 @@
 - hosts: all
   become: yes
   tasks:
-    - name: ensure nginx is installed
-      service: 
-        name: nginx 
-        state: stopped
+
+    - name: "apt-get update"
+      apt:
+          update_cache: yes
+          cache_valid_time: 3600
+
+    - name: "install nginx"
+      apt:
+        name: ['nginx']
+        state: latest
+
+    - name: "create www directory"
+      file:
+        path: /var/www/{{ domain }}
+        state: directory
+        mode: '0775'
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+
+    - name: delete default nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+        notify: restart nginx
+
+    - name: copy nginx site.conf
+      template:
+        src: files/nginx.conf
+        dest: /etc/nginx/sites-enabled/{{ domain }}
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart nginx
 
     - name: Upload default index.html for host
       copy: 
@@ -23,7 +52,8 @@
       lineinfile: 
         dest: /etc/nginx/sites-available/default
                   regexp='# Only for nginx-naxsi'
-                  line='location /images {}'       
+                  line='location /images {}'   
+                      
     - name: Create a directory called images
       file: 
         path: /usr/share/nginx/html/images 
@@ -36,7 +66,7 @@
         dest: /usr/share/nginx/html/images/ 
         mode: 0644
         
-    - name: restart nginx  
-      service: 
-        name: nginx 
+    - name: restart nginx
+      service:
+        name: nginx
         state: restarted

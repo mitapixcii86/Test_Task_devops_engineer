@@ -73,12 +73,15 @@ resource "aws_instance" "test_devops" {
     connection {
       type        = "ssh"
       host        = self.public_ip
-      user        = "ec2-user"
+      user        = "ubuntu"
       private_key = file(local_file.cloud_pem_private.filename)
       agent = false
 
     }
   }
+  # provisioner "local-exec" {
+  #   command = "ansible-playbook ../ansible/playbook.yml"
+  # }
 }
 
 #Configure the public ip output
@@ -98,10 +101,6 @@ resource "local_file" "instance_ip" {
   content  = data.template_file.inventory.rendered
   filename = "../ansible/inventory"
 }
-
-resource "null_resource" "local-exec" {
-    command = "ansible-playbook ../ansible/playbook.yml"
-  }
 
 #Attaching elastic IP
 resource "aws_eip" "ip-test_devops" {

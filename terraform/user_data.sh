@@ -18,9 +18,9 @@ docker pull nginx:latest
 docker run -d -p 80:80 --name nginx nginx
 
 # # setup user 'ubuntu'
-# useradd -m -p "[PASSWORD_HASH]" -s /bin/bash -G sudo ubuntu
-# mkdir -p /home/ubuntu/.ssh
-# chown ubuntu:ubuntu /home/ubuntu/.ssh
-# chmod 0700 /home/ubuntu/.ssh
-# echo "[PUBLIC_KEY]" > /home/ubuntu/.ssh/authorized_keys
-# chmod 0644 /home/ubuntu/.ssh/authorized_keys
+useradd -m -p "[PASSWORD_HASH]" -s /bin/bash -G sudo ubuntu
+mkdir -p /home/ubuntu/.ssh
+chown ubuntu:ubuntu /home/ubuntu/.ssh
+chmod 0700 /home/ubuntu/.ssh
+echo "[PUBLIC_KEY]" > /home/ubuntu/.ssh/authorized_keys
+chmod 0644 /home/ubuntu/.ssh/authorized_keys
