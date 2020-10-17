@@ -1,3 +1,4 @@
 ---
 - include: ci.yml
-- include: playbook.yml
+# - include: playbook.yml
+- script: ansible-playbook -i inventory.ini  playbook.yml

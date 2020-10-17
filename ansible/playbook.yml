@@ -8,10 +8,10 @@
           update_cache: yes
           cache_valid_time: 3600
 
-    - name: "install nginx"
-      apt:
-        name: ['nginx']
-        state: latest
+    # - name: "install nginx"
+    #   apt:
+    #     name: ['nginx']
+    #     state: latest
 
     - name: "create www directory"
       file:
@@ -53,7 +53,7 @@
         dest: /etc/nginx/sites-available/default
                   regexp='# Only for nginx-naxsi'
                   line='location /images {}'   
-                      
+
     - name: Create a directory called images
       file: 
         path: /usr/share/nginx/html/images 
