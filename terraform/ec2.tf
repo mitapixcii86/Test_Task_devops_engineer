@@ -4,8 +4,6 @@ resource "tls_private_key" "test_devops" {
   rsa_bits  = 4096
 }
 
-output "tls_private_key" { value = tls_private_key.test_devops.private_key_pem }
-
 resource "local_file" "cloud_pem_private" {
   filename = "key/terraform-ansible.pem"
   content  = tls_private_key.test_devops.private_key_pem
@@ -16,7 +14,6 @@ resource "local_file" "cloud_pem_private" {
 
 resource "aws_key_pair" "generated_key" {
   key_name = var.key_name
-  # public_key = var.ami_key_pair_name
   public_key = tls_private_key.test_devops.public_key_openssh
 }
 
@@ -55,7 +52,6 @@ resource "aws_instance" "test_devops" {
   instance_type               = "t2.micro"
   subnet_id                   = element(aws_subnet.private.*.id, count.index)
   key_name                    = aws_key_pair.generated_key.key_name
-  #user_data                   = file("user_data.sh")
 
   # references security group created above
   vpc_security_group_ids = [aws_security_group.test_devops_ec2.id]
@@ -63,13 +59,10 @@ resource "aws_instance" "test_devops" {
     Name = "docker-nginx-test_devops-instance-${count.index}"
   }
   provisioner "file" {
-    source      = "app"
+    source      = "../app"
     destination = "/home/ubuntu/"
   }
-  # provisioner "remote-exec" {
-  #   inline = ["chmod +x /home/ubuntu/app/user_data.sh", 
-  #   "/home/ubuntu/app/user_data.sh"]
-  # }
+
   connection {
     type        = "ssh"
     host        = self.public_ip
@@ -125,9 +118,6 @@ resource "null_resource" "update_inventory" {
   provisioner "local-exec" {
     command = "chmod 700 ../inventory/inventory"
   }
-  # provisioner "local-exec" {
-  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../inventory/inventory -u ubuntu ../cd.yml --private-key key/terraform-ansible.pem -vvvv"
-  # }
 }
 
 

@@ -1,5 +1,5 @@
 ---
-
+# destroy all the infrastructure that is created
 - hosts: localhost
   connection: local
   gather_facts: no
