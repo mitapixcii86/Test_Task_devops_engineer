@@ -1,0 +1,55 @@
+---
+- hosts: all
+  become: yes
+  become_user: root
+  become_method: sudo
+  tasks:
+    # - name: "apt-get update"
+    #   apt:
+    #       update_cache: yes
+    #       cache_valid_time: 3600
+    #   become: yes
+
+    # - name: "install nginx"
+    #   apt:
+    #     name: ['nginx']
+    #     state: latest
+    #   become: yes
+
+    # - name: ensure nginx is at the latest version
+    #   apt: name=nginx state=latest
+    #   become: yes
+
+    - name: start nginx
+      service:
+          name: nginx
+          state: started
+      become: yes
+    - name: copy the nginx config file and restart nginx
+      copy:
+        src: files/static_website.conf
+        dest: /etc/nginx/sites-available/static_website.conf
+      become: yes
+    - name: create symlink
+      file:
+        src: files/static_website.conf
+        dest: /etc/nginx/sites-enabled/default
+        state: link
+      become: yes
+    - name: copy nginx site.conf
+      template:
+        src: files/nginx.conf
+        dest: /etc/nginx/sites-enabled/default
+        owner: root
+        group: root
+        mode: '0644'
+      notify: restart nginx
+    - name: copy the content of the web site
+      copy:
+        src: files/static_website
+        dest: /home/devops/static_website
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+      become: yes
