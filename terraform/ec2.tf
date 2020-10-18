@@ -55,29 +55,47 @@ resource "aws_instance" "test_devops" {
   instance_type               = "t2.micro"
   subnet_id                   = element(aws_subnet.private.*.id, count.index)
   key_name                    = aws_key_pair.generated_key.key_name
-  user_data                   = file("user_data.sh")
+  #user_data                   = file("user_data.sh")
 
   # references security group created above
   vpc_security_group_ids = [aws_security_group.test_devops_ec2.id]
   tags = {
     Name = "docker-nginx-test_devops-instance-${count.index}"
   }
-
-  provisioner "remote-exec" {
-    inline = ["echo Connected to new host"]
-
-    connection {
-      type        = "ssh"
-      host        = self.public_ip
-      user        = "ubuntu"
-      private_key = file(local_file.cloud_pem_private.filename)
-      agent = false
-
-    }
+  provisioner "file" {
+    source      = "app"
+    destination = "/home/ubuntu/"
   }
-  # provisioner "local-exec" {
-  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../inventory/inventory -u ubuntu ../cd.yml --private-key key/terraform-ansible.pem"
+  # provisioner "remote-exec" {
+  #   inline = ["chmod +x /home/ubuntu/app/user_data.sh", 
+  #   "/home/ubuntu/app/user_data.sh"]
   # }
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ubuntu"
+    private_key = file(local_file.cloud_pem_private.filename)
+    agent       = false
+
+  }
+}
+#Attaching elastic IP
+resource "aws_eip" "ip-test_devops" {
+  instance = element(aws_instance.test_devops.*.id, count.index)
+  count    = length(var.azs)
+  vpc      = true
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ubuntu"
+    private_key = file(local_file.cloud_pem_private.filename)
+    agent       = false
+
+  }
+  provisioner "remote-exec" {
+    inline = ["chmod +x /home/ubuntu/app/user_data.sh",
+    "/home/ubuntu/app/user_data.sh"]
+  }
 }
 
 #Configure the public ip output
@@ -86,25 +104,25 @@ output "instance_ip" {
   value       = join(",", aws_instance.test_devops.*.public_ip)
 }
 
-data  "template_file" "inventory" {
-    template = file("./templates/inventory.tpl")
-    vars = {
-        instance_ip = join("\n", aws_instance.test_devops.*.public_ip)
-        # key_path = local_file.cloud_pem_private.filename
-        key_path = "/terraform/key/terraform-ansible.pem"
-    }
+data "template_file" "inventory" {
+  template = file("./templates/inventory.tpl")
+  vars = {
+    instance_ip = join("\n", aws_instance.test_devops.*.public_ip)
+    # key_path = local_file.cloud_pem_private.filename
+    key_path = "/terraform/key/terraform-ansible.pem"
+  }
 }
 
 resource "null_resource" "update_inventory" {
 
-    triggers = {
-        template = data.template_file.inventory.rendered
-    }
+  triggers = {
+    template = data.template_file.inventory.rendered
+  }
 
-    provisioner "local-exec" {
-        command = "echo '${data.template_file.inventory.rendered}' > ../inventory/inventory"
-    }
-    provisioner "local-exec" {
+  provisioner "local-exec" {
+    command = "echo '${data.template_file.inventory.rendered}' > ../inventory/inventory"
+  }
+  provisioner "local-exec" {
     command = "chmod 700 ../inventory/inventory"
   }
   # provisioner "local-exec" {
@@ -112,10 +130,5 @@ resource "null_resource" "update_inventory" {
   # }
 }
 
-#Attaching elastic IP
-resource "aws_eip" "ip-test_devops" {
-  instance = element(aws_instance.test_devops.*.id, count.index)
-  count    = length(var.azs)
-  vpc      = true
-}
+
 
