@@ -27,8 +27,6 @@ variable "ec2_amis" {
   type        = map
   default = {
     "eu-central-1" = "ami-0d971d62e4d019dcc"
-    "eu-west-1"    = "ami-09b9e380df60300c8"
-    "eu-west-1"    = "ami-09e4b40ce58bb7360"
   }
 }
 
