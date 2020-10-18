@@ -27,18 +27,18 @@
       become: yes
     - name: copy the nginx config file and restart nginx
       copy:
-        src: files/static_website.conf
+        src: app/static_website.conf
         dest: /etc/nginx/sites-available/static_website.conf
       become: yes
     - name: create symlink
       file:
-        src: files/static_website.conf
+        src: app/static_website.conf
         dest: /etc/nginx/sites-enabled/default
         state: link
       become: yes
     - name: copy nginx site.conf
       template:
-        src: files/nginx.conf
+        src: app/nginx.conf
         dest: /etc/nginx/sites-enabled/default
         owner: root
         group: root
@@ -46,7 +46,7 @@
       notify: restart nginx
     - name: copy the content of the web site
       copy:
-        src: files/static_website
+        src: app/static_website
         dest: /home/devops/static_website
     - name: restart nginx
       service:

@@ -4,7 +4,7 @@
   connection: local
   gather_facts: no
   vars:
-    project_dir : "../terraform"
+    project_dir : "./"
   tasks:
   - name: terraform init
     command: "terraform init {{ project_dir }} "

@@ -1,8 +1,0 @@
-[ip_instance]
-3.127.106.131
-#3.126.180.238
-#18.158.81.14
-
-[all:vars]
-ansible_ssh_private_key_file = key/terraform-ansible.pem
-ansible_ssh_user = ubuntu

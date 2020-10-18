@@ -1,0 +1,4 @@
+---
+- import_playbook: ./terraform/ci.yml
+- import_playbook: app.yml
+# - script: ansible-playbook -i inventory.ini  playbook.yml

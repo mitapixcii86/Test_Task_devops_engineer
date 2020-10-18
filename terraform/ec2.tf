@@ -76,7 +76,7 @@ resource "aws_instance" "test_devops" {
     }
   }
   # provisioner "local-exec" {
-  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -u ubuntu ../ansible/cd.yml --private-key key/terraform-ansible.pem"
+  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../inventory/inventory -u ubuntu ../cd.yml --private-key key/terraform-ansible.pem"
   # }
 }
 
@@ -90,7 +90,8 @@ data  "template_file" "inventory" {
     template = file("./templates/inventory.tpl")
     vars = {
         instance_ip = join("\n", aws_instance.test_devops.*.public_ip)
-        key_path = local_file.cloud_pem_private.filename
+        # key_path = local_file.cloud_pem_private.filename
+        key_path = "/terraform/key/terraform-ansible.pem"
     }
 }
 
@@ -101,13 +102,13 @@ resource "null_resource" "update_inventory" {
     }
 
     provisioner "local-exec" {
-        command = "echo '${data.template_file.inventory.rendered}' > ../ansible/inventory"
+        command = "echo '${data.template_file.inventory.rendered}' > ../inventory/inventory"
     }
     provisioner "local-exec" {
-    command = "chmod 700 ../ansible/inventory"
+    command = "chmod 700 ../inventory/inventory"
   }
   # provisioner "local-exec" {
-  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../ansible/inventory -u ubuntu ../ansible/cd.yml --private-key key/terraform-ansible.pem -vvvv"
+  #   command = "ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i ../inventory/inventory -u ubuntu ../cd.yml --private-key key/terraform-ansible.pem -vvvv"
   # }
 }
 

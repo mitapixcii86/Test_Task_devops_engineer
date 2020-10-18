@@ -4,7 +4,7 @@
   connection: local
   gather_facts: no
   vars:
-    project_dir : "../terraform"
+    project_dir : "./terraform"
   tasks:
   - name: terraform destroy
     terraform:
