@@ -1,10 +1,10 @@
 ---
-
+# destroy all the infrastructure that is created
 - hosts: localhost
   connection: local
   gather_facts: no
   vars:
-    project_dir : "../terraform"
+    project_dir : "./terraform"
   tasks:
   - name: terraform destroy
     terraform:

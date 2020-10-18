@@ -4,8 +4,6 @@ resource "tls_private_key" "test_devops" {
   rsa_bits  = 4096
 }
 
-output "tls_private_key" { value = tls_private_key.test_devops.private_key_pem }
-
 resource "local_file" "cloud_pem_private" {
   filename = "key/terraform-ansible.pem"
   content  = tls_private_key.test_devops.private_key_pem
@@ -16,14 +14,8 @@ resource "local_file" "cloud_pem_private" {
 
 resource "aws_key_pair" "generated_key" {
   key_name = var.key_name
-  # public_key = var.ami_key_pair_name
   public_key = tls_private_key.test_devops.public_key_openssh
 }
-
-# resource "local_file" "cloud_pem_public" {
-#   #filename = "key/terraform-ansible-public.pem"
-#   content  = tls_private_key.test_devops.public_key_openssh
-# }
 
 # security group for EC2 instances
 resource "aws_security_group" "test_devops_ec2" {
@@ -42,12 +34,13 @@ resource "aws_security_group" "test_devops_ec2" {
     to_port     = 22
     cidr_blocks = ["0.0.0.0/0"]
   }
-  # egress {
-  #   protocol    = "-1"
-  #   from_port   = 0
-  #   to_port     = 0
-  #   cidr_blocks = ["0.0.0.0/0"]
-  # }
+  egress {
+    protocol    = "-1"
+    from_port   = 0
+    to_port     = 0
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
 }
 
 # EC2 instances, one per availability zone
@@ -59,25 +52,42 @@ resource "aws_instance" "test_devops" {
   instance_type               = "t2.micro"
   subnet_id                   = element(aws_subnet.private.*.id, count.index)
   key_name                    = aws_key_pair.generated_key.key_name
-  user_data                   = file("user_data.sh")
 
   # references security group created above
   vpc_security_group_ids = [aws_security_group.test_devops_ec2.id]
   tags = {
     Name = "docker-nginx-test_devops-instance-${count.index}"
   }
+  provisioner "file" {
+    source      = "../app"
+    destination = "/home/ubuntu/"
+  }
 
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ubuntu"
+    private_key = file(local_file.cloud_pem_private.filename)
+    agent       = false
+
+  }
+}
+#Attaching elastic IP
+resource "aws_eip" "ip-test_devops" {
+  instance = element(aws_instance.test_devops.*.id, count.index)
+  count    = length(var.azs)
+  vpc      = true
+  connection {
+    type        = "ssh"
+    host        = self.public_ip
+    user        = "ubuntu"
+    private_key = file(local_file.cloud_pem_private.filename)
+    agent       = false
+
+  }
   provisioner "remote-exec" {
-    inline = ["echo Connected to new host"]
-
-    connection {
-      type        = "ssh"
-      host        = self.public_ip
-      user        = "ec2-user"
-      private_key = file(local_file.cloud_pem_private.filename)
-      agent = false
-
-    }
+    inline = ["chmod +x /home/ubuntu/app/user_data.sh",
+    "/home/ubuntu/app/user_data.sh"]
   }
 }
 
@@ -87,26 +97,28 @@ output "instance_ip" {
   value       = join(",", aws_instance.test_devops.*.public_ip)
 }
 
-data  "template_file" "inventory" {
-    template = file("./templates/inventory.tpl")
-    vars = {
-        instance_ip = join("\n", aws_instance.test_devops.*.public_ip)
-    }
+data "template_file" "inventory" {
+  template = file("./templates/inventory.tpl")
+  vars = {
+    instance_ip = join("\n", aws_instance.test_devops.*.public_ip)
+    # key_path = local_file.cloud_pem_private.filename
+    key_path = "/terraform/key/terraform-ansible.pem"
+  }
 }
 
-resource "local_file" "instance_ip" {
-  content  = data.template_file.inventory.rendered
-  filename = "../ansible/inventory"
-}
+resource "null_resource" "update_inventory" {
 
-resource "null_resource" "local-exec" {
-    command = "ansible-playbook ../ansible/playbook.yml"
+  triggers = {
+    template = data.template_file.inventory.rendered
   }
 
-#Attaching elastic IP
-resource "aws_eip" "ip-test_devops" {
-  instance = element(aws_instance.test_devops.*.id, count.index)
-  count    = length(var.azs)
-  vpc      = true
+  provisioner "local-exec" {
+    command = "echo '${data.template_file.inventory.rendered}' > ../inventory/inventory"
+  }
+  provisioner "local-exec" {
+    command = "chmod 700 ../inventory/inventory"
+  }
 }
+
+
 

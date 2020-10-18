@@ -5,4 +5,5 @@ terraform.tfstate
 terraform.tfstate.backup
 # ignore vscode workspace files
 tdd.code-workspace
-/ansible/.terraform
+.terraform
+/key/
