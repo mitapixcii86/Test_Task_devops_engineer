@@ -2,7 +2,7 @@
 #### Getting started
 
 ####  What are we building ?
-Automate Infra Provising Terraform & Ansible in AWS
+## Automate Infra Provising Terraform & Ansible in AWS
     ### Application Stack
     
     ○ Load Balancer
@@ -14,7 +14,19 @@ Automate Infra Provising Terraform & Ansible in AWS
     ### Tech/framework used
         AWS CLI
         Terraform
+## Automate Deployment using Terraform & Docker/Ansible in AWS
+    ### Application Stack
+    
+        ■ Docker app:
+            nginx, php-cgi 
+    
+
+    ### Tech/framework used
+        AWS CLI
+        Terraform
+        Docker
         Ansible
+        
 
 
 ### Prerequisites
@@ -45,8 +57,10 @@ AWS access credentials must be supplied on the command line (see example below).
 ### EC2 Keypair 
 The EC2 keypair name and ey gets generated automatically within the code. However if you wish to use your own generated key you can make modification (In var.tf-> Uncomment line24 & In ec2.tf-> Uncomment #16 & Comment #17)
 
+However, this is not a recommened practice. For a more secured setting, the key should be generated manually so that the private key can be shared with the required users for a local Open SSH connection.
+
 ### AWS user and secret key
-Please make sure your terraform , aws cli and ansible has the aws_access_key and aws_secret_key setup. If it is not setup, uncomment the section in var.tf and provider.tf and provide the key as default value. 
+Please make sure your terraform , aws cli and ansible has the aws_access_key and aws_secret_key setup. If it is not setup, uncomment the section in var.tf and provider.tf and provide the key as default value.
 
 
 
